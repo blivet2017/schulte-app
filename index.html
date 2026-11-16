@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Таблица Шульте — Telegram Mini App</title>
+  <script src="https://telegram.org"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #f4f6f8);
+      --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+      --text-main: var(--tg-theme-text-color, #1f2937);
+      --text-muted: var(--tg-theme-hint-color, #6b7280);
+      --accent: var(--tg-theme-button-color, #2563eb);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --success: #16a34a;
+      --error: #dc2626;
+      --border: rgba(128, 128, 128, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      padding: 18px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    select, button {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      background: var(--bg-color);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 11px;
+      width: 100%;
+      margin-bottom: 14px;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn-primary:active {
+      opacity: 0.85;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-color);
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .stat-item span {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .target-number {
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+
+    .board-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+    }
+
+    .board {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      gap: 6px;
+      user-select: none;
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color);
+      color: var(--text-main);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.15s ease;
+    }
+
+    .cell:active {
+      transform: scale(0.94);
+    }
+
+    .cell.correct-flash {
+      background-color: rgba(22, 163, 74, 0.25) !important;
+      border-color: var(--success) !important;
+    }
+
+    .cell.wrong-flash {
+      background-color: rgba(220, 38, 38, 0.25) !important;
+      border-color: var(--error) !important;
+      animation: shake 0.25s ease;
+    }
+
+    .cell.completed {
+      opacity: 0.3;
+    }
+
+    .center-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: rgba(220, 38, 38, 0.8);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+
+    .center-dot.visible {
+      display: block;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      color: var(--text-main);
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .modal h2 {
+      margin-bottom: 10px;
+      color: var(--success);
+    }
+
+    .modal p {
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .modal .record-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      color: #d97706;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 8px 0 12px;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Таблица Шульте</h1>
+      <p class="subtitle">Смотрите в центр и ищите числа периферийным зрением</p>
+    </header>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="gridSize">Сетка</label>
+        <select id="gridSize">
+          <option value="3">3 × 3</option>
+          <option value="4">4 × 4</option>
+          <option value="5" selected>5 × 5</option>
+          <option value="6">6 × 6</option>
+          <option value="7">7 × 7</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="gameMode">Порядок</label>
+        <select id="gameMode">
+          <option value="asc" selected>1 → N</option>
+          <option value="desc">N → 1</option>
+          <option value="shuffle">Микс</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="visualStyle">Стиль</label>
+        <select id="visualStyle">
+          <option value="classic" selected>Обычный</option>
+          <option value="colored">Цветной</option>
+          <option value="dot">Точка</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="startBtn">Новая таблица</button>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span>Ищем</span>
+        <div class="stat-value target-number" id="targetDisplay">1</div>
+      </div>
+      <div class="stat-item">
+        <span>Время</span>
+        <div class="stat-value" id="timerDisplay">0.0 с</div>
+      </div>
+      <div class="stat-item">
+        <span>Ошибки</span>
+        <div class="stat-value" id="errorsDisplay">0</div>
+      </div>
+      <div class="stat-item">
+        <span>Рекорд</span>
+        <div class="stat-value" id="bestDisplay">—</div>
+      </div>
+    </div>
+
+    <div class="board-wrapper">
+      <div class="center-dot" id="centerDot"></div>
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal">
+      <h2>Отлично!</h2>
+      <p>Время: <strong id="finalTime">0.0 с</strong></p>
+      <p>Ошибок: <strong id="finalErrors">0</strong></p>
+      <div id="newRecordBadge" class="record-badge" style="display: none;">Новый рекорд!</div>
+      <button class="btn-primary" id="playAgainBtn" style="margin-top: 10px; margin-bottom: 0;">Сыграть ещё</button>
+      <button class="btn-secondary" id="sendToBotBtn" style="display: none;">Отправить в чат бота</button>
+    </div>
+  </div>
+
+  <script>
+    // Инициализация Telegram WebApp
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+const boardEl = document.getElementById('board');
+const gridSizeSelect = document.getElementById('gridSize');
+const gameModeSelect = document.getElementById('gameMode');
+const visualStyleSelect = document.getElementById('visualStyle');
+const startBtn = document.getElementById('startBtn');
+const targetDisplay = document.getElementById('targetDisplay');
+const timerDisplay = document.getElementById('timerDisplay');
+const errorsDisplay = document.getElementById('errorsDisplay');
+const bestDisplay = document.getElementById('bestDisplay');
+const centerDot = document.getElementById('centerDot');
+const resultModal = document.getElementById('resultModal');
+const finalTimeEl = document.getElementById('finalTime');
+const finalErrorsEl = document.getElementById('finalErrors');
+const newRecordBadge = document.getElementById('newRecordBadge');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const sendToBotBtn = document.getElementById('sendToBotBtn');
+
+let size = 5;
+let totalCells = 25;
+let numbers = [];
+let currentTarget = 1;
+let errors = 0;
+let startTime = null;
+let timerInterval = null;
+let isRunning = false;
+let lastResultData = null;
+
+// Цвета с тёмным текстом для хорошей читаемости в любой теме
+const pastelColors = [
+  '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
+  '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
+];
+
+function haptic(type) {
+  if (!tg || !tg.HapticFeedback) return;
+  if (type === 'success') tg.HapticFeedback.impactOccurred('light');
+  if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+  if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
+}
+
+function getStorageKey() {
+  return `schulte_best_${size}_${gameModeSelect.value}`;
+}
+
+function updateBestDisplay() {
+  const best = localStorage.getItem(getStorageKey());
+  bestDisplay.textContent = best ? `${parseFloat(best).toFixed(1)} с` : '—';
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  isRunning = false;
+}
+
+function startTimer() {
+  if (isRunning) return;
+  isRunning = true;
+  startTime = performance.now();
+  timerInterval = setInterval(() => {
+    const elapsed = (performance.now() - startTime) / 1000;
+    timerDisplay.textContent = `${elapsed.toFixed(1)} с`;
+  }, 100);
+}
+
+function initGame() {
+  stopTimer();
+  resultModal.classList.remove('active');
+
+  size = parseInt(gridSizeSelect.value, 10);
+  totalCells = size * size;
+  errors = 0;
+
+  const mode = gameModeSelect.value;
+  currentTarget = mode === 'desc' ? totalCells : 1;
+
+  targetDisplay.textContent = currentTarget;
+  timerDisplay.textContent = '0.0 с';
+  errorsDisplay.textContent = '0';
+  updateBestDisplay();
+
+  const style = visualStyleSelect.value;
+  centerDot.classList.toggle('visible', style === 'dot');
+
+  numbers = Array.from({ length: totalCells }, (_, i) => i + 1);
+  shuffleArray(numbers);
+  renderBoard();
+}
+
+function renderBoard() {
+  boardEl.innerHTML = '';
+  boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+  boardEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+
+  const style = visualStyleSelect.value;
+  const mode = gameModeSelect.value;
+  const fontSize = size <= 4 ? '1.8rem' : size === 5 ? '1.5rem' : size === 6 ? '1.25rem' : '1.05rem';
+
+  numbers.forEach((num) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = num;
+    cell.style.fontSize = fontSize;
+
+    if (style === 'colored') {
+      const randomColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+      cell.style.backgroundColor = randomColor;
+      cell.style.color = '#1f2937';
+    }
+
+    if (mode === 'asc' && num < currentTarget) {
+      cell.classList.add('completed');
+    } else if (mode === 'desc' && num > currentTarget) {
+      cell.classList.add('completed');
+    }
+
+    cell.addEventListener('click', () => handleCellClick(num, cell));
+    boardEl.appendChild(cell);
+  });
+}
+
+function handleCellClick(num, cellEl) {
+  if (!isRunning && ((gameModeSelect.value !== 'desc' && currentTarget === 1) || (gameModeSelect.value === 'desc' && currentTarget === totalCells))) {
+    startTimer();
+  }
+
+  const mode = gameModeSelect.value;
+
+  if (num === currentTarget) {
+    haptic('success');
+    cellEl.classList.add('correct-flash');
+    setTimeout(() => cellEl.classList.remove('correct-flash'), 200);
+
+    const isFinished = (mode === 'desc' && currentTarget === 1) || (mode !== 'desc' && currentTarget === totalCells);
+
+    if (isFinished) {
+      finishGame();
+      return;
+    }
+
+    currentTarget = mode === 'desc' ? currentTarget - 1 : currentTarget + 1;
+    targetDisplay.textContent = currentTarget;
+
+    if (mode === 'shuffle') {
+      shuffleArray(numbers);
+      renderBoard();
+    } else {
+      cellEl.classList.add('completed');
+    }
+  } else {
+    haptic('error');
+    errors++;
+    errorsDisplay.textContent = errors;
+    cellEl.classList.add('wrong-flash');
+    setTimeout(() => cellEl.classList.remove('wrong-flash'), 250);
+  }
+}
+
+function finishGame() {
+  stopTimer();
+  haptic('win');
+  const finalSeconds = (performance.now() - startTime) / 1000;
+  const formattedTime = finalSeconds.toFixed(1);
+
+  finalTimeEl.textContent = `${formattedTime} с`;
+  finalErrorsEl.textContent = errors;
+
+  lastResultData = {
+    size: `${size}x${size}`,
+    mode: gameModeSelect.value,
+    time: formattedTime,
+    errors: errors
+  };
+
+  // Показываем кнопку отправки, если приложение открыто внутри Telegram
+  if (tg && tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0) {
+    sendToBotBtn.style.display = 'block';
+  }
+
+  const key = getStorageKey();
+  const prevBest = localStorage.getItem(key);
+
+  if (!prevBest || finalSeconds < parseFloat(prevBest)) {
+    localStorage.setItem(key, finalSeconds.toString());
+    newRecordBadge.style.display = 'inline-block';
+    updateBestDisplay();
+  } else {
+    newRecordBadge.style.display = 'none';
+  }
+
+  resultModal.classList.add('active');
+}
+
+sendToBotBtn.addEventListener('click', () => {
+  if (tg && lastResultData) {
+    tg.sendData(JSON.stringify(lastResultData));
+  }
+});
+
+startBtn.addEventListener('click', initGame);
+playAgainBtn.addEventListener('click', initGame);
+gridSizeSelect.addEventListener('change', initGame);
+gameModeSelect.addEventListener('change', initGame);
+visualStyleSelect.addEventListener('change', initGame);
+
+initGame();
+	</script>
+</body>
+</html>
