@@ -325,7 +325,9 @@
 
  <script>
     // Инициализация Telegram WebApp
-  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  const BOT_USERNAME = "SchulteTestBot"; // Юзернейм вашего бота без @
+
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) {
   tg.ready();
   tg.expand();
@@ -356,7 +358,7 @@ let isRunning = false;
 let isAttemptUsed = false;
 let lastResultData = null;
 
-const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v1';
+const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v2';
 
 const pastelColors = [
   '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
@@ -404,12 +406,19 @@ function startTimer() {
 
 function sendResultToTelegram() {
   if (!lastResultData) return;
-  const payload = JSON.stringify(lastResultData);
 
-  if (tg && typeof tg.sendData === 'function') {
-    tg.sendData(payload);
+  // Формируем компактную строку параметров: res_5x5_asc_19-7_1
+  const safeTime = String(lastResultData.time).replace('.', '-');
+  const startParam = `res_${lastResultData.size}_${lastResultData.mode}_${safeTime}_${lastResultData.errors}`;
+  const telegramLink = `https://t.me{BOT_USERNAME}?start=${startParam}`;
+
+  if (tg && typeof tg.openTelegramLink === 'function') {
+    tg.openTelegramLink(telegramLink);
+    setTimeout(() => {
+      if (typeof tg.close === 'function') tg.close();
+    }, 300);
   } else {
-    alert('Откройте приложение через кнопку в меню Telegram-бота для отправки данных:\n' + payload);
+    window.location.href = telegramLink;
   }
 }
 
@@ -540,14 +549,10 @@ function finishGame() {
     errors: errors
   };
 
-  // Сохраняем факт прохождения одной попытки
   localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
 
   startBtn.textContent = 'Попытка завершена';
   resultModal.classList.add('active');
-
-  // Автоматически отправляем результат в бота
-  sendResultToTelegram();
 }
 
 sendToBotBtn.addEventListener('click', sendResultToTelegram);
