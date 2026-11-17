@@ -324,246 +324,244 @@
   </div>
 
  <script>
-    // Инициализация Telegram WebApp
-  const BOT_USERNAME = "SchulteTestBot"; // Юзернейм вашего бота без @
+    const BOT_USERNAME = "SchulteTestBot";
 
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) {
-  tg.ready();
-  tg.expand();
-}
-
-const boardEl = document.getElementById('board');
-const gridSizeSelect = document.getElementById('gridSize');
-const gameModeSelect = document.getElementById('gameMode');
-const visualStyleSelect = document.getElementById('visualStyle');
-const startBtn = document.getElementById('startBtn');
-const targetDisplay = document.getElementById('targetDisplay');
-const timerDisplay = document.getElementById('timerDisplay');
-const errorsDisplay = document.getElementById('errorsDisplay');
-const centerDot = document.getElementById('centerDot');
-const resultModal = document.getElementById('resultModal');
-const finalTimeEl = document.getElementById('finalTime');
-const finalErrorsEl = document.getElementById('finalErrors');
-const sendToBotBtn = document.getElementById('sendToBotBtn');
-
-let size = 5;
-let totalCells = 25;
-let numbers = [];
-let currentTarget = 1;
-let errors = 0;
-let startTime = null;
-let timerInterval = null;
-let isRunning = false;
-let isAttemptUsed = false;
-let lastResultData = null;
-
-const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v2';
-
-const pastelColors = [
-  '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
-  '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
-];
-
-function haptic(type) {
-  if (!tg || !tg.HapticFeedback) return;
-  if (type === 'success') tg.HapticFeedback.impactOccurred('light');
-  if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-  if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
-}
-
-function lockControls() {
-  gridSizeSelect.disabled = true;
-  gameModeSelect.disabled = true;
-  visualStyleSelect.disabled = true;
-  startBtn.disabled = true;
-  startBtn.textContent = 'Тест начат (1 попытка)';
-}
-
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  isRunning = false;
-}
-
-function startTimer() {
-  if (isRunning) return;
-  isRunning = true;
-  lockControls();
-  startTime = performance.now();
-  timerInterval = setInterval(() => {
-    const elapsed = (performance.now() - startTime) / 1000;
-    timerDisplay.textContent = `${elapsed.toFixed(1)} с`;
-  }, 100);
-}
-
-function sendResultToTelegram() {
-  if (!lastResultData) return;
-
-  // Формируем компактную строку параметров: res_5x5_asc_19-7_1
-  const safeTime = String(lastResultData.time).replace('.', '-');
-  const startParam = `res_${lastResultData.size}_${lastResultData.mode}_${safeTime}_${lastResultData.errors}`;
-  const telegramLink = `https://t.me{BOT_USERNAME}?start=${startParam}`;
-
-  if (tg && typeof tg.openTelegramLink === 'function') {
-    tg.openTelegramLink(telegramLink);
-    setTimeout(() => {
-      if (typeof tg.close === 'function') tg.close();
-    }, 300);
-  } else {
-    window.location.href = telegramLink;
-  }
-}
-
-function checkSavedAttempt() {
-  const saved = localStorage.getItem(ATTEMPT_STORAGE_KEY);
-  if (saved) {
-    isAttemptUsed = true;
-    lastResultData = JSON.parse(saved);
-    lockControls();
-    startBtn.textContent = 'Попытка уже использована';
-    finalTimeEl.textContent = `${lastResultData.time} с`;
-    finalErrorsEl.textContent = lastResultData.errors;
-    resultModal.classList.add('active');
-    return true;
-  }
-  return false;
-}
-
-function initGame() {
-  if (isAttemptUsed || isRunning) return;
-
-  stopTimer();
-  size = parseInt(gridSizeSelect.value, 10);
-  totalCells = size * size;
-  errors = 0;
-
-  const mode = gameModeSelect.value;
-  currentTarget = mode === 'desc' ? totalCells : 1;
-
-  targetDisplay.textContent = currentTarget;
-  timerDisplay.textContent = '0.0 с';
-  errorsDisplay.textContent = '0';
-
-  const style = visualStyleSelect.value;
-  centerDot.classList.toggle('visible', style === 'dot');
-
-  numbers = Array.from({ length: totalCells }, (_, i) => i + 1);
-  shuffleArray(numbers);
-  renderBoard();
-}
-
-function renderBoard() {
-  boardEl.innerHTML = '';
-  boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-  boardEl.style.gridTemplateRows = `repeat(${size}, 1fr)`;
-
-  const style = visualStyleSelect.value;
-  const mode = gameModeSelect.value;
-  const fontSize = size <= 4 ? '1.8rem' : size === 5 ? '1.5rem' : size === 6 ? '1.25rem' : '1.05rem';
-
-  numbers.forEach((num) => {
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.textContent = num;
-    cell.style.fontSize = fontSize;
-
-    if (style === 'colored') {
-      const randomColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
-      cell.style.backgroundColor = randomColor;
-      cell.style.color = '#1f2937';
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) {
+      tg.ready();
+      tg.expand();
     }
 
-    if (mode === 'asc' && num < currentTarget) {
-      cell.classList.add('completed');
-    } else if (mode === 'desc' && num > currentTarget) {
-      cell.classList.add('completed');
+    const boardEl = document.getElementById('board');
+    const gridSizeSelect = document.getElementById('gridSize');
+    const gameModeSelect = document.getElementById('gameMode');
+    const visualStyleSelect = document.getElementById('visualStyle');
+    const startBtn = document.getElementById('startBtn');
+    const targetDisplay = document.getElementById('targetDisplay');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const errorsDisplay = document.getElementById('errorsDisplay');
+    const centerDot = document.getElementById('centerDot');
+    const resultModal = document.getElementById('resultModal');
+    const finalTimeEl = document.getElementById('finalTime');
+    const finalErrorsEl = document.getElementById('finalErrors');
+    const sendToBotBtn = document.getElementById('sendToBotBtn');
+
+    let size = 5;
+    let totalCells = 25;
+    let numbers = [];
+    let currentTarget = 1;
+    let errors = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let isRunning = false;
+    let isAttemptUsed = false;
+    let lastResultData = null;
+
+    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v3';
+
+    const pastelColors = [
+      '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
+      '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
+    ];
+
+    function haptic(type) {
+      if (!tg || !tg.HapticFeedback) return;
+      if (type === 'success') tg.HapticFeedback.impactOccurred('light');
+      if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+      if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
     }
 
-    cell.addEventListener('click', () => handleCellClick(num, cell));
-    boardEl.appendChild(cell);
-  });
-}
-
-function handleCellClick(num, cellEl) {
-  if (isAttemptUsed) return;
-
-  if (!isRunning) {
-    startTimer();
-  }
-
-  const mode = gameModeSelect.value;
-
-  if (num === currentTarget) {
-    haptic('success');
-    cellEl.classList.add('correct-flash');
-    setTimeout(() => cellEl.classList.remove('correct-flash'), 200);
-
-    const isFinished = (mode === 'desc' && currentTarget === 1) || (mode !== 'desc' && currentTarget === totalCells);
-
-    if (isFinished) {
-      finishGame();
-      return;
+    function lockControls() {
+      gridSizeSelect.disabled = true;
+      gameModeSelect.disabled = true;
+      visualStyleSelect.disabled = true;
+      startBtn.disabled = true;
+      startBtn.textContent = 'Тест начат (1 попытка)';
     }
 
-    currentTarget = mode === 'desc' ? currentTarget - 1 : currentTarget + 1;
-    targetDisplay.textContent = currentTarget;
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
-    if (mode === 'shuffle') {
+    function stopTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      lockControls();
+      startTime = performance.now();
+      timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        timerDisplay.textContent = elapsed.toFixed(1) + ' с';
+      }, 100);
+    }
+
+    function sendResultToTelegram() {
+      if (!lastResultData) return;
+
+      const safeTime = String(lastResultData.time).replace('.', '-');
+      const startParam = 'res_' + lastResultData.size + '_' + lastResultData.mode + '_' + safeTime + '_' + lastResultData.errors;
+      const telegramLink = 'https://t.me' + BOT_USERNAME + '?start=' + startParam;
+
+      if (tg && typeof tg.openTelegramLink === 'function') {
+        tg.openTelegramLink(telegramLink);
+        setTimeout(() => {
+          if (typeof tg.close === 'function') tg.close();
+        }, 300);
+      } else {
+        window.location.href = telegramLink;
+      }
+    }
+
+    function checkSavedAttempt() {
+      const saved = localStorage.getItem(ATTEMPT_STORAGE_KEY);
+      if (saved) {
+        isAttemptUsed = true;
+        lastResultData = JSON.parse(saved);
+        lockControls();
+        startBtn.textContent = 'Попытка уже использована';
+        finalTimeEl.textContent = lastResultData.time + ' с';
+        finalErrorsEl.textContent = lastResultData.errors;
+        resultModal.classList.add('active');
+        return true;
+      }
+      return false;
+    }
+
+    function initGame() {
+      if (isAttemptUsed || isRunning) return;
+
+      stopTimer();
+      size = parseInt(gridSizeSelect.value, 10);
+      totalCells = size * size;
+      errors = 0;
+
+      const mode = gameModeSelect.value;
+      currentTarget = mode === 'desc' ? totalCells : 1;
+
+      targetDisplay.textContent = currentTarget;
+      timerDisplay.textContent = '0.0 с';
+      errorsDisplay.textContent = '0';
+
+      const style = visualStyleSelect.value;
+      centerDot.classList.toggle('visible', style === 'dot');
+
+      numbers = Array.from({ length: totalCells }, (_, i) => i + 1);
       shuffleArray(numbers);
       renderBoard();
-    } else {
-      cellEl.classList.add('completed');
     }
-  } else {
-    haptic('error');
-    errors++;
-    errorsDisplay.textContent = errors;
-    cellEl.classList.add('wrong-flash');
-    setTimeout(() => cellEl.classList.remove('wrong-flash'), 250);
-  }
-}
 
-function finishGame() {
-  stopTimer();
-  isAttemptUsed = true;
-  haptic('win');
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      boardEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
+      boardEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
 
-  const finalSeconds = (performance.now() - startTime) / 1000;
-  const formattedTime = finalSeconds.toFixed(1);
+      const style = visualStyleSelect.value;
+      const mode = gameModeSelect.value;
+      const fontSize = size <= 4 ? '1.8rem' : size === 5 ? '1.5rem' : size === 6 ? '1.25rem' : '1.05rem';
 
-  finalTimeEl.textContent = `${formattedTime} с`;
-  finalErrorsEl.textContent = errors;
+      numbers.forEach((num) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.textContent = num;
+        cell.style.fontSize = fontSize;
 
-  lastResultData = {
-    size: `${size}x${size}`,
-    mode: gameModeSelect.value,
-    time: formattedTime,
-    errors: errors
-  };
+        if (style === 'colored') {
+          const randomColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+          cell.style.backgroundColor = randomColor;
+          cell.style.color = '#1f2937';
+        }
 
-  localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
+        if (mode === 'asc' && num < currentTarget) {
+          cell.classList.add('completed');
+        } else if (mode === 'desc' && num > currentTarget) {
+          cell.classList.add('completed');
+        }
 
-  startBtn.textContent = 'Попытка завершена';
-  resultModal.classList.add('active');
-}
+        cell.addEventListener('click', () => handleCellClick(num, cell));
+        boardEl.appendChild(cell);
+      });
+    }
 
-sendToBotBtn.addEventListener('click', sendResultToTelegram);
-startBtn.addEventListener('click', initGame);
-gridSizeSelect.addEventListener('change', initGame);
-gameModeSelect.addEventListener('change', initGame);
-visualStyleSelect.addEventListener('change', initGame);
+    function handleCellClick(num, cellEl) {
+      if (isAttemptUsed) return;
 
-if (!checkSavedAttempt()) {
-  initGame();
-}
-	</script>
+      if (!isRunning) {
+        startTimer();
+      }
+
+      const mode = gameModeSelect.value;
+
+      if (num === currentTarget) {
+        haptic('success');
+        cellEl.classList.add('correct-flash');
+        setTimeout(() => cellEl.classList.remove('correct-flash'), 200);
+
+        const isFinished = (mode === 'desc' && currentTarget === 1) || (mode !== 'desc' && currentTarget === totalCells);
+
+        if (isFinished) {
+          finishGame();
+          return;
+        }
+
+        currentTarget = mode === 'desc' ? currentTarget - 1 : currentTarget + 1;
+        targetDisplay.textContent = currentTarget;
+
+        if (mode === 'shuffle') {
+          shuffleArray(numbers);
+          renderBoard();
+        } else {
+          cellEl.classList.add('completed');
+        }
+      } else {
+        haptic('error');
+        errors++;
+        errorsDisplay.textContent = errors;
+        cellEl.classList.add('wrong-flash');
+        setTimeout(() => cellEl.classList.remove('wrong-flash'), 250);
+      }
+    }
+
+    function finishGame() {
+      stopTimer();
+      isAttemptUsed = true;
+      haptic('win');
+
+      const finalSeconds = (performance.now() - startTime) / 1000;
+      const formattedTime = finalSeconds.toFixed(1);
+
+      finalTimeEl.textContent = formattedTime + ' с';
+      finalErrorsEl.textContent = errors;
+
+      lastResultData = {
+        size: size + 'x' + size,
+        mode: gameModeSelect.value,
+        time: formattedTime,
+        errors: errors
+      };
+
+      localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
+
+      startBtn.textContent = 'Попытка завершена';
+      resultModal.classList.add('active');
+    }
+
+    sendToBotBtn.addEventListener('click', sendResultToTelegram);
+    startBtn.addEventListener('click', initGame);
+    gridSizeSelect.addEventListener('change', initGame);
+    gameModeSelect.addEventListener('change', initGame);
+    visualStyleSelect.addEventListener('change', initGame);
+
+    if (!checkSavedAttempt()) {
+      initGame();
+    }
+  </script>
 </body>
 </html>
