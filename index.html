@@ -323,7 +323,7 @@
     </div>
   </div>
 
- <script>
+   <script>
     const BOT_USERNAME = "SchulteTestBot";
 
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -357,7 +357,7 @@
     let isAttemptUsed = false;
     let lastResultData = null;
 
-    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v4';
+    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v6';
 
     const pastelColors = [
       '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
@@ -377,6 +377,16 @@
       visualStyleSelect.disabled = true;
       startBtn.disabled = true;
       startBtn.textContent = 'Тест начат (1 попытка)';
+    }
+
+    function markModalAsSent() {
+      sendToBotBtn.style.display = 'none';
+      const noteEl = document.querySelector('.warning-note');
+      if (noteEl) {
+        noteEl.textContent = '✅ Результат уже отправлен в бот! Можете закрыть это окно.';
+        noteEl.style.color = 'var(--success)';
+        noteEl.style.fontWeight = '600';
+      }
     }
 
     function shuffleArray(arr) {
@@ -408,13 +418,19 @@
 
       const safeTime = String(lastResultData.time).replace('.', '-');
       const startParam = 'res_' + lastResultData.size + '_' + lastResultData.mode + '_' + safeTime + '_' + lastResultData.errors;
-      const telegramLink = 'https://t.me/' + BOT_USERNAME + '?start=' + startParam;
+      const telegramLink = 'https://t.me/ + BOT_USERNAME + '?start=' + startParam;
+
+      // Сохраняем отметку, что результат отправлен
+      lastResultData.isSent = true;
+      localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
+
+      markModalAsSent();
 
       if (tg && typeof tg.openTelegramLink === 'function') {
         tg.openTelegramLink(telegramLink);
-        setTimeout(() => {
-          if (typeof tg.close === 'function') tg.close();
-        }, 300);
+        if (typeof tg.close === 'function') {
+          tg.close();
+        }
       } else {
         window.location.href = telegramLink;
       }
@@ -429,6 +445,12 @@
         startBtn.textContent = 'Попытка уже использована';
         finalTimeEl.textContent = lastResultData.time + ' с';
         finalErrorsEl.textContent = lastResultData.errors;
+
+        // Если результат уже был отправлен ранее, скрываем кнопку
+        if (lastResultData.isSent) {
+          markModalAsSent();
+        }
+
         resultModal.classList.add('active');
         return true;
       }
@@ -544,7 +566,8 @@
         size: size + 'x' + size,
         mode: gameModeSelect.value,
         time: formattedTime,
-        errors: errors
+        errors: errors,
+        isSent: false
       };
 
       localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
@@ -563,5 +586,6 @@
       initGame();
     }
   </script>
+
 </body>
 </html>
