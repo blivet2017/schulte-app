@@ -357,7 +357,7 @@
     let isAttemptUsed = false;
     let lastResultData = null;
 
-    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v8';
+    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v9';
 
     const pastelColors = [
       '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
@@ -413,7 +413,7 @@ function sendResultToTelegram() {
 if (!lastResultData) return;
 const safeTime = String(lastResultData.time).replace('.', '-');
 const startParam = 'res_' + lastResultData.size + '' + lastResultData.mode + '' + safeTime + '_' + lastResultData.errors;
-const telegramLink = 't.me/' + BOT_USERNAME + '?start=' + startParam;
+const telegramLink = 'https://t.me/' + BOT_USERNAME + '?start=' + startParam;
 lastResultData.isSent = true;
 localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
 markModalAsSent();
