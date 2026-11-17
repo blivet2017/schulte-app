@@ -408,7 +408,7 @@
 
       const safeTime = String(lastResultData.time).replace('.', '-');
       const startParam = 'res_' + lastResultData.size + '_' + lastResultData.mode + '_' + safeTime + '_' + lastResultData.errors;
-      const telegramLink = 'https://t.me' + BOT_USERNAME + '?start=' + startParam;
+      const telegramLink = 'https://t.me/' + BOT_USERNAME + '?start=' + startParam;
 
       if (tg && typeof tg.openTelegramLink === 'function') {
         tg.openTelegramLink(telegramLink);
