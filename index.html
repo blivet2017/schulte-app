@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Таблица Шульте — Telegram Mini App</title>
+  <title>Таблица Шульте — Тест</title>
   <script src="https://telegram.org"></script>
   <style>
     :root {
@@ -88,31 +88,25 @@
       cursor: pointer;
     }
 
+    select:disabled, button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .btn-primary {
       background: var(--accent);
       color: var(--accent-text);
       border: none;
       font-weight: 600;
       font-size: 0.95rem;
-      padding: 11px;
+      padding: 12px;
       width: 100%;
       margin-bottom: 14px;
       transition: opacity 0.15s ease;
     }
 
-    .btn-primary:active {
+    .btn-primary:active:not(:disabled) {
       opacity: 0.85;
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 10px;
-      width: 100%;
-      margin-top: 8px;
     }
 
     .stats-bar {
@@ -212,7 +206,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.7);
       display: none;
       align-items: center;
       justify-content: center;
@@ -240,19 +234,14 @@
     }
 
     .modal p {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       font-size: 1rem;
     }
 
-    .modal .record-badge {
-      display: inline-block;
-      background: rgba(245, 158, 11, 0.2);
-      color: #d97706;
-      padding: 4px 12px;
-      border-radius: 99px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin: 8px 0 12px;
+    .warning-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 10px;
     }
 
     @keyframes shake {
@@ -267,7 +256,7 @@
   <div class="container">
     <header>
       <h1>Таблица Шульте</h1>
-      <p class="subtitle">Смотрите в центр и ищите числа периферийным зрением</p>
+      <p class="subtitle">У вас одна попытка. Смотрите в центр таблицы</p>
     </header>
 
     <div class="controls">
@@ -301,7 +290,7 @@
       </div>
     </div>
 
-    <button class="btn-primary" id="startBtn">Новая таблица</button>
+    <button class="btn-primary" id="startBtn">Перемешать перед стартом</button>
 
     <div class="stats-bar">
       <div class="stat-item">
@@ -316,10 +305,6 @@
         <span>Ошибки</span>
         <div class="stat-value" id="errorsDisplay">0</div>
       </div>
-      <div class="stat-item">
-        <span>Рекорд</span>
-        <div class="stat-value" id="bestDisplay">—</div>
-      </div>
     </div>
 
     <div class="board-wrapper">
@@ -330,18 +315,17 @@
 
   <div class="modal-overlay" id="resultModal">
     <div class="modal">
-      <h2>Отлично!</h2>
+      <h2>Тест завершён!</h2>
       <p>Время: <strong id="finalTime">0.0 с</strong></p>
       <p>Ошибок: <strong id="finalErrors">0</strong></p>
-      <div id="newRecordBadge" class="record-badge" style="display: none;">Новый рекорд!</div>
-      <button class="btn-primary" id="playAgainBtn" style="margin-top: 10px; margin-bottom: 0;">Сыграть ещё</button>
-      <button class="btn-secondary" id="sendToBotBtn" style="display: none;">Отправить в чат бота</button>
+      <button class="btn-primary" id="sendToBotBtn" style="margin-top: 14px; margin-bottom: 0;">Отправить результат в чат</button>
+      <p class="warning-note">Попытка использована. Окно закроется после отправки.</p>
     </div>
   </div>
 
-  <script>
+ <script>
     // Инициализация Telegram WebApp
-const tg = window.Telegram ? window.Telegram.WebApp : null;
+  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) {
   tg.ready();
   tg.expand();
@@ -355,13 +339,10 @@ const startBtn = document.getElementById('startBtn');
 const targetDisplay = document.getElementById('targetDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 const errorsDisplay = document.getElementById('errorsDisplay');
-const bestDisplay = document.getElementById('bestDisplay');
 const centerDot = document.getElementById('centerDot');
 const resultModal = document.getElementById('resultModal');
 const finalTimeEl = document.getElementById('finalTime');
 const finalErrorsEl = document.getElementById('finalErrors');
-const newRecordBadge = document.getElementById('newRecordBadge');
-const playAgainBtn = document.getElementById('playAgainBtn');
 const sendToBotBtn = document.getElementById('sendToBotBtn');
 
 let size = 5;
@@ -372,9 +353,11 @@ let errors = 0;
 let startTime = null;
 let timerInterval = null;
 let isRunning = false;
+let isAttemptUsed = false;
 let lastResultData = null;
 
-// Цвета с тёмным текстом для хорошей читаемости в любой теме
+const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v1';
+
 const pastelColors = [
   '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
   '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
@@ -387,13 +370,12 @@ function haptic(type) {
   if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
 }
 
-function getStorageKey() {
-  return `schulte_best_${size}_${gameModeSelect.value}`;
-}
-
-function updateBestDisplay() {
-  const best = localStorage.getItem(getStorageKey());
-  bestDisplay.textContent = best ? `${parseFloat(best).toFixed(1)} с` : '—';
+function lockControls() {
+  gridSizeSelect.disabled = true;
+  gameModeSelect.disabled = true;
+  visualStyleSelect.disabled = true;
+  startBtn.disabled = true;
+  startBtn.textContent = 'Тест начат (1 попытка)';
 }
 
 function shuffleArray(arr) {
@@ -412,6 +394,7 @@ function stopTimer() {
 function startTimer() {
   if (isRunning) return;
   isRunning = true;
+  lockControls();
   startTime = performance.now();
   timerInterval = setInterval(() => {
     const elapsed = (performance.now() - startTime) / 1000;
@@ -419,10 +402,36 @@ function startTimer() {
   }, 100);
 }
 
-function initGame() {
-  stopTimer();
-  resultModal.classList.remove('active');
+function sendResultToTelegram() {
+  if (!lastResultData) return;
+  const payload = JSON.stringify(lastResultData);
 
+  if (tg && typeof tg.sendData === 'function') {
+    tg.sendData(payload);
+  } else {
+    alert('Откройте приложение через кнопку в меню Telegram-бота для отправки данных:\n' + payload);
+  }
+}
+
+function checkSavedAttempt() {
+  const saved = localStorage.getItem(ATTEMPT_STORAGE_KEY);
+  if (saved) {
+    isAttemptUsed = true;
+    lastResultData = JSON.parse(saved);
+    lockControls();
+    startBtn.textContent = 'Попытка уже использована';
+    finalTimeEl.textContent = `${lastResultData.time} с`;
+    finalErrorsEl.textContent = lastResultData.errors;
+    resultModal.classList.add('active');
+    return true;
+  }
+  return false;
+}
+
+function initGame() {
+  if (isAttemptUsed || isRunning) return;
+
+  stopTimer();
   size = parseInt(gridSizeSelect.value, 10);
   totalCells = size * size;
   errors = 0;
@@ -433,7 +442,6 @@ function initGame() {
   targetDisplay.textContent = currentTarget;
   timerDisplay.textContent = '0.0 с';
   errorsDisplay.textContent = '0';
-  updateBestDisplay();
 
   const style = visualStyleSelect.value;
   centerDot.classList.toggle('visible', style === 'dot');
@@ -476,7 +484,9 @@ function renderBoard() {
 }
 
 function handleCellClick(num, cellEl) {
-  if (!isRunning && ((gameModeSelect.value !== 'desc' && currentTarget === 1) || (gameModeSelect.value === 'desc' && currentTarget === totalCells))) {
+  if (isAttemptUsed) return;
+
+  if (!isRunning) {
     startTimer();
   }
 
@@ -514,7 +524,9 @@ function handleCellClick(num, cellEl) {
 
 function finishGame() {
   stopTimer();
+  isAttemptUsed = true;
   haptic('win');
+
   const finalSeconds = (performance.now() - startTime) / 1000;
   const formattedTime = finalSeconds.toFixed(1);
 
@@ -528,38 +540,25 @@ function finishGame() {
     errors: errors
   };
 
-  // Показываем кнопку отправки, если приложение открыто внутри Telegram
-  if (tg && tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0) {
-    sendToBotBtn.style.display = 'block';
-  }
+  // Сохраняем факт прохождения одной попытки
+  localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
 
-  const key = getStorageKey();
-  const prevBest = localStorage.getItem(key);
-
-  if (!prevBest || finalSeconds < parseFloat(prevBest)) {
-    localStorage.setItem(key, finalSeconds.toString());
-    newRecordBadge.style.display = 'inline-block';
-    updateBestDisplay();
-  } else {
-    newRecordBadge.style.display = 'none';
-  }
-
+  startBtn.textContent = 'Попытка завершена';
   resultModal.classList.add('active');
+
+  // Автоматически отправляем результат в бота
+  sendResultToTelegram();
 }
 
-sendToBotBtn.addEventListener('click', () => {
-  if (tg && lastResultData) {
-    tg.sendData(JSON.stringify(lastResultData));
-  }
-});
-
+sendToBotBtn.addEventListener('click', sendResultToTelegram);
 startBtn.addEventListener('click', initGame);
-playAgainBtn.addEventListener('click', initGame);
 gridSizeSelect.addEventListener('change', initGame);
 gameModeSelect.addEventListener('change', initGame);
 visualStyleSelect.addEventListener('change', initGame);
 
-initGame();
+if (!checkSavedAttempt()) {
+  initGame();
+}
 	</script>
 </body>
 </html>
