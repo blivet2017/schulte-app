@@ -253,7 +253,7 @@
     }
 
     .cell.wrong-flash {
-      background-color: rgba(220, 38, 38, 0.25) !important;
+      background-color: rgba(2, 38, 38, 0.25) !important;
       border-color: var(--error) !important;
       animation: shake 0.25s ease;
     }
@@ -268,7 +268,7 @@
       left: 50%;
       width: 10px;
       height: 10px;
-      background: rgba(220, 38, 38, 0.8);
+      background: rgba(2, 38, 38, 0.8);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
@@ -288,7 +288,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: px;
       z-index: 100;
     }
 
@@ -347,7 +347,7 @@
           <tr><td>21</td><td>6</td><td>22</td><td>13</td><td>3</td></tr>
           <tr><td>2</td><td>19</td><td>15</td><td>24</td><td>10</td></tr>
           <tr><td>17</td><td>11</td><td>4</td><td>12</td><td>18</td></tr>
-          <tr><td>5</td><td>25</td><td>23</td><td>7</td><td>20</td></tr>
+          <tr><td>5</td><td>25</td><td>23</td><td>7</td><td></td></tr>
         </table>
         <p>Ваша задача — как можно быстрее найти все числа по порядку, нажимая на них.</p>
         <p><strong>У вас одна попытка.</strong></p>
@@ -472,7 +472,7 @@ let isRunning = false;
 let isAttemptUsed = false;
 let lastResultData = null;
 
-const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v20';
+const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v21';
 
 const pastelColors = [
   '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
