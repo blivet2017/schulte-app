@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Таблица Шульте — Тест</title>
+  <title>Таблица Шульте — Тестирование</title>
   <script src="https://telegram.org"></script>
   <style>
     :root {
@@ -59,6 +59,79 @@
       color: var(--text-muted);
     }
 
+    /* Блок инструкции */
+    .instruction-box {
+      background: var(--bg-color);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .instruction-box p {
+      margin-bottom: 10px;
+    }
+
+    .instruction-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .example-table {
+      width: 100%;
+      max-width: 220px;
+      margin: 10px auto;
+      border-collapse: collapse;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: #ffffff;
+      color: #1f2937;
+    }
+
+    .example-table td {
+      border: 1px solid #9ca3af;
+      padding: 5px;
+      width: 20%;
+    }
+
+    /* Поле ввода возраста */
+    .age-form {
+      margin-bottom: 14px;
+    }
+
+    .age-form label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .age-input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--bg-color);
+      color: var(--text-main);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .age-input:focus {
+      border-color: var(--accent);
+    }
+
+    .age-error {
+      color: var(--error);
+      font-size: 0.8rem;
+      margin-top: 5px;
+      display: none;
+      font-weight: 500;
+    }
+
+    /* Настройки сетки (до старта) */
     .controls {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -72,41 +145,45 @@
       gap: 4px;
     }
 
-    label {
+    .control-group label {
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--text-muted);
     }
 
-    select, button {
+    select {
       padding: 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--border);
       font-size: 0.85rem;
       background: var(--bg-color);
       color: var(--text-main);
-      cursor: pointer;
-    }
-
-    select:disabled, button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
     }
 
     .btn-primary {
       background: var(--accent);
       color: var(--accent-text);
       border: none;
+      border-radius: 10px;
       font-weight: 600;
-      font-size: 0.95rem;
-      padding: 12px;
+      font-size: 1rem;
+      padding: 13px;
       width: 100%;
-      margin-bottom: 14px;
+      cursor: pointer;
       transition: opacity 0.15s ease;
     }
 
-    .btn-primary:active:not(:disabled) {
+    .btn-primary:active {
       opacity: 0.85;
+    }
+
+    /* Экран самого теста */
+    .game-section {
+      display: none;
+    }
+
+    .game-section.active {
+      display: block;
     }
 
     .stats-bar {
@@ -203,6 +280,7 @@
       display: block;
     }
 
+    /* Модальное окно завершения */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -256,295 +334,379 @@
   <div class="container">
     <header>
       <h1>Таблица Шульте</h1>
-      <p class="subtitle">У вас одна попытка. Смотрите в центр таблицы</p>
+      <p class="subtitle">Тестирование скорости восприятия</p>
     </header>
 
-    <div class="controls">
-      <div class="control-group">
-        <label for="gridSize">Сетка</label>
-        <select id="gridSize">
-          <option value="3">3 × 3</option>
-          <option value="4">4 × 4</option>
-          <option value="5" selected>5 × 5</option>
-          <option value="6">6 × 6</option>
-          <option value="7">7 × 7</option>
-        </select>
+    <!-- ЭКРАН 1: Инструкция и ввод возраста -->
+    <div id="introSection">
+      <div class="instruction-box">
+        <p><strong>Таблица Шульте</strong> — это таблица, в ячейках которой в случайном порядке расположены числа.</p>
+        <p>Например:</p>
+        <table class="example-table">
+          <tr><td>8</td><td>16</td><td>1</td><td>14</td><td>9</td></tr>
+          <tr><td>21</td><td>6</td><td>22</td><td>13</td><td>3</td></tr>
+          <tr><td>2</td><td>19</td><td>15</td><td>24</td><td>10</td></tr>
+          <tr><td>17</td><td>11</td><td>4</td><td>12</td><td>18</td></tr>
+          <tr><td>5</td><td>25</td><td>23</td><td>7</td><td>20</td></tr>
+        </table>
+        <p>Ваша задача — как можно быстрее найти все числа по порядку, нажимая на них.</p>
+        <p><strong>У вас одна попытка.</strong></p>
+        <p>Если готовы к прохождению теста, укажите ваш возраст и нажмите кнопку <strong>«Начать»</strong>.</p>
       </div>
 
-      <div class="control-group">
-        <label for="gameMode">Порядок</label>
-        <select id="gameMode">
-          <option value="asc" selected>1 → N</option>
-          <option value="desc">N → 1</option>
-          <option value="shuffle">Микс</option>
-        </select>
+      <div class="controls">
+        <div class="control-group">
+          <label for="gridSize">Сетка</label>
+          <select id="gridSize">
+            <option value="3">3 × 3</option>
+            <option value="4">4 × 4</option>
+            <option value="5" selected>5 × 5</option>
+            <option value="6">6 × 6</option>
+            <option value="7">7 × 7</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="gameMode">Порядок</label>
+          <select id="gameMode">
+            <option value="asc" selected>1 → N</option>
+            <option value="desc">N → 1</option>
+            <option value="shuffle">Микс</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="visualStyle">Стиль</label>
+          <select id="visualStyle">
+            <option value="classic" selected>Обычный</option>
+            <option value="colored">Цветной</option>
+            <option value="dot">Точка</option>
+          </select>
+        </div>
       </div>
 
-      <div class="control-group">
-        <label for="visualStyle">Стиль</label>
-        <select id="visualStyle">
-          <option value="classic" selected>Обычный</option>
-          <option value="colored">Цветной</option>
-          <option value="dot">Точка</option>
-        </select>
+      <div class="age-form">
+        <label for="ageInput">Ваш возраст (полных лет, от 10 до 80):</label>
+        <input type="text" id="ageInput" class="age-input" inputmode="numeric" maxlength="2" placeholder="Например: 25">
+        <div id="ageError" class="age-error">Введите возраст только цифрами от 10 до 80.</div>
       </div>
+
+      <button class="btn-primary" id="startBtn">Начать</button>
     </div>
 
-    <button class="btn-primary" id="startBtn">Перемешать перед стартом</button>
+   <!-- ЭКРАН 2: Игровое поле (скрыто до нажатия "Начать") -->
+    <div id="gameSection" class="game-section">
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span>Ищем</span>
+          <div class="stat-value target-number" id="targetDisplay">1</div>
+        </div>
+        <div class="stat-item">
+          <span>Время</span>
+          <div class="stat-value" id="timerDisplay">0.0 с</div>
+        </div>
+        <div class="stat-item">
+          <span>Ошибки</span>
+          <div class="stat-value" id="errorsDisplay">0</div>
+        </div>
+      </div>
 
-    <div class="stats-bar">
-      <div class="stat-item">
-        <span>Ищем</span>
-        <div class="stat-value target-number" id="targetDisplay">1</div>
+      <div class="board-wrapper">
+        <div class="center-dot" id="centerDot"></div>
+        <div class="board" id="board"></div>
       </div>
-      <div class="stat-item">
-        <span>Время</span>
-        <div class="stat-value" id="timerDisplay">0.0 с</div>
-      </div>
-      <div class="stat-item">
-        <span>Ошибки</span>
-        <div class="stat-value" id="errorsDisplay">0</div>
-      </div>
-    </div>
-
-    <div class="board-wrapper">
-      <div class="center-dot" id="centerDot"></div>
-      <div class="board" id="board"></div>
     </div>
   </div>
 
   <div class="modal-overlay" id="resultModal">
     <div class="modal">
       <h2>Тест завершён!</h2>
+      <p>Возраст: <strong id="finalAge">—</strong></p>
       <p>Время: <strong id="finalTime">0.0 с</strong></p>
       <p>Ошибок: <strong id="finalErrors">0</strong></p>
-      <button class="btn-primary" id="sendToBotBtn" style="margin-top: 14px; margin-bottom: 0;">Отправить результат в чат</button>
+      <button class="btn-primary" id="sendToBotBtn" style="margin-top: 14px;">Отправить результат в чат</button>
       <p class="warning-note">Попытка использована. Окно закроется после отправки.</p>
     </div>
   </div>
-
+  
   <script>
-    const BOT_USERNAME = "SchulteTestBot";
+  
+  const BOT_USERNAME = "SchulteTestBot";
 
-    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-    }
-
-    const boardEl = document.getElementById('board');
-    const gridSizeSelect = document.getElementById('gridSize');
-    const gameModeSelect = document.getElementById('gameMode');
-    const visualStyleSelect = document.getElementById('visualStyle');
-    const startBtn = document.getElementById('startBtn');
-    const targetDisplay = document.getElementById('targetDisplay');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const errorsDisplay = document.getElementById('errorsDisplay');
-    const centerDot = document.getElementById('centerDot');
-    const resultModal = document.getElementById('resultModal');
-    const finalTimeEl = document.getElementById('finalTime');
-    const finalErrorsEl = document.getElementById('finalErrors');
-    const sendToBotBtn = document.getElementById('sendToBotBtn');
-
-    let size = 5;
-    let totalCells = 25;
-    let numbers = [];
-    let currentTarget = 1;
-    let errors = 0;
-    let startTime = null;
-    let timerInterval = null;
-    let isRunning = false;
-    let isAttemptUsed = false;
-    let lastResultData = null;
-
-    const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v15';
-
-    const pastelColors = [
-      '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
-      '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
-    ];
-
-    function haptic(type) {
-      if (!tg || !tg.HapticFeedback) return;
-      if (type === 'success') tg.HapticFeedback.impactOccurred('light');
-      if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-      if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
-    }
-
-    function lockControls() {
-      gridSizeSelect.disabled = true;
-      gameModeSelect.disabled = true;
-      visualStyleSelect.disabled = true;
-      startBtn.disabled = true;
-      startBtn.textContent = 'Тест начат (1 попытка)';
-    }
-
-    function markModalAsSent() {
-      sendToBotBtn.style.display = 'none';
-      const noteEl = document.querySelector('.warning-note');
-      if (noteEl) {
-        noteEl.textContent = '✅ Результат уже отправлен в бот! Можете закрыть это окно.';
-		noteEl.style.color = 'var(--success)';
-noteEl.style.fontWeight = '600';
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) {
+  tg.ready();
+  tg.expand();
 }
+
+const introSection = document.getElementById('introSection');
+const gameSection = document.getElementById('gameSection');
+const ageInput = document.getElementById('ageInput');
+const ageError = document.getElementById('ageError');
+const startBtn = document.getElementById('startBtn');
+
+const boardEl = document.getElementById('board');
+const gridSizeSelect = document.getElementById('gridSize');
+const gameModeSelect = document.getElementById('gameMode');
+const visualStyleSelect = document.getElementById('visualStyle');
+const targetDisplay = document.getElementById('targetDisplay');
+const timerDisplay = document.getElementById('timerDisplay');
+const errorsDisplay = document.getElementById('errorsDisplay');
+const centerDot = document.getElementById('centerDot');
+
+const resultModal = document.getElementById('resultModal');
+const finalAgeEl = document.getElementById('finalAge');
+const finalTimeEl = document.getElementById('finalTime');
+const finalErrorsEl = document.getElementById('finalErrors');
+const sendToBotBtn = document.getElementById('sendToBotBtn');
+
+let userAge = null;
+let size = 5;
+let totalCells = 25;
+let numbers = [];
+let currentTarget = 1;
+let errors = 0;
+let startTime = null;
+let timerInterval = null;
+let isRunning = false;
+let isAttemptUsed = false;
+let lastResultData = null;
+
+const ATTEMPT_STORAGE_KEY = 'schulte_single_attempt_v20';
+
+const pastelColors = [
+  '#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7',
+  '#f3e8ff', '#ffedd5', '#e0e7ff', '#ccfbf1'
+];
+
+function haptic(type) {
+  if (!tg || !tg.HapticFeedback) return;
+  if (type === 'success') tg.HapticFeedback.impactOccurred('light');
+  if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+  if (type === 'win') tg.HapticFeedback.notificationOccurred('success');
 }
+
+function markModalAsSent() {
+  sendToBotBtn.style.display = 'none';
+  const noteEl = document.querySelector('.warning-note');
+  if (noteEl) {
+    noteEl.textContent = '✅ Результат уже отправлен в бот! Можете закрыть это окно.';
+    noteEl.style.color = 'var(--success)';
+    noteEl.style.fontWeight = '600';
+  }
+}
+
 function shuffleArray(arr) {
-for (let i = arr.length - 1; i > 0; i--) {
-const j = Math.floor(Math.random() * (i + 1));
-[arr[i], arr[j]] = [arr[j], arr[i]];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
-return arr;
-}
-function stopTimer() {
-clearInterval(timerInterval);
-isRunning = false;
-}
-function startTimer() {
-if (isRunning) return;
-isRunning = true;
-lockControls();
-startTime = performance.now();
-timerInterval = setInterval(() => {
-const elapsed = (performance.now() - startTime) / 1000;
-timerDisplay.textContent = elapsed.toFixed(1) + ' с';
-}, 100);
-}
-function sendResultToTelegram() {
-if (!lastResultData) return;
-const safeTime = String(lastResultData.time).replace('.', 'p');
-const startParam = 'res-' + lastResultData.size + '-' + lastResultData.mode + '-' + safeTime + '-' + lastResultData.errors;
-const telegramLink = 'https://t.me/' + BOT_USERNAME + '?start=' + startParam;
 
-lastResultData.isSent = true;
-localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
-markModalAsSent();
-if (tg && typeof tg.openTelegramLink === 'function') {
-tg.openTelegramLink(telegramLink);
-if (typeof tg.close === 'function') {
-tg.close();
+function stopTimer() {
+  clearInterval(timerInterval);
+  isRunning = false;
 }
-} else {
-window.location.href = telegramLink;
+
+function startTimer() {
+  if (isRunning) return;
+  isRunning = true;
+  startTime = performance.now();
+  timerInterval = setInterval(() => {
+    const elapsed = (performance.now() - startTime) / 1000;
+    timerDisplay.textContent = elapsed.toFixed(1) + ' с';
+  }, 100);
 }
+
+function sendResultToTelegram() {
+  if (!lastResultData) return;
+
+  const safeTime = String(lastResultData.time).replace('.', 'p');
+  // Передаём возраст вместе с параметрами теста: res-возраст-сетка-режим-время-ошибки
+  const startParam = 'res-' + lastResultData.age + '-' + lastResultData.size + '-' + lastResultData.mode + '-' + safeTime + '-' + lastResultData.errors;
+  const telegramLink = 'https://t.me/' + BOT_USERNAME + '?start=' + startParam;
+
+  lastResultData.isSent = true;
+  localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
+
+  markModalAsSent();
+
+  if (tg && typeof tg.openTelegramLink === 'function') {
+    tg.openTelegramLink(telegramLink);
+    if (typeof tg.close === 'function') {
+      tg.close();
+    }
+  } else {
+    window.location.href = telegramLink;
+  }
 }
+
 function checkSavedAttempt() {
-const saved = localStorage.getItem(ATTEMPT_STORAGE_KEY);
-if (saved) {
-isAttemptUsed = true;
-lastResultData = JSON.parse(saved);
-lockControls();
-startBtn.textContent = 'Попытка уже использована';
-finalTimeEl.textContent = lastResultData.time + ' с';
-finalErrorsEl.textContent = lastResultData.errors;
-if (lastResultData.isSent) {
-markModalAsSent();
+  const saved = localStorage.getItem(ATTEMPT_STORAGE_KEY);
+  if (saved) {
+    isAttemptUsed = true;
+    lastResultData = JSON.parse(saved);
+    startBtn.disabled = true;
+    startBtn.textContent = 'Попытка уже использована';
+    finalAgeEl.textContent = lastResultData.age;
+    finalTimeEl.textContent = lastResultData.time + ' с';
+    finalErrorsEl.textContent = lastResultData.errors;
+
+    if (lastResultData.isSent) {
+      markModalAsSent();
+    }
+
+    resultModal.classList.add('active');
+    return true;
+  }
+  return false;
 }
-resultModal.classList.add('active');
-return true;
+
+// Проверка возраста и запуск теста
+function validateAndStart() {
+  if (isAttemptUsed) return;
+
+  const rawAge = ageInput.value.trim();
+  const isDigitsOnly = /^\d+$/.test(rawAge);
+  const parsedAge = parseInt(rawAge, 10);
+
+  if (!isDigitsOnly || parsedAge < 10 || parsedAge > 80) {
+    ageError.style.display = 'block';
+    haptic('error');
+    return;
+  }
+
+  ageError.style.display = 'none';
+  userAge = parsedAge;
+
+  // Скрываем инструкцию и показываем игровое поле
+  introSection.style.display = 'none';
+  gameSection.classList.add('active');
+
+  // Генерируем таблицу и сразу запускаем таймер
+  size = parseInt(gridSizeSelect.value, 10);
+  totalCells = size * size;
+  errors = 0;
+
+  const mode = gameModeSelect.value;
+  currentTarget = mode === 'desc' ? totalCells : 1;
+
+  targetDisplay.textContent = currentTarget;
+  timerDisplay.textContent = '0.0 с';
+  errorsDisplay.textContent = '0';
+
+  const style = visualStyleSelect.value;
+  centerDot.classList.toggle('visible', style === 'dot');
+
+  numbers = Array.from({ length: totalCells }, (_, i) => i + 1);
+  shuffleArray(numbers);
+  renderBoard();
+  startTimer();
 }
-return false;
-}
-function initGame() {
-if (isAttemptUsed || isRunning) return;
-stopTimer();
-size = parseInt(gridSizeSelect.value, 10);
-totalCells = size * size;
-errors = 0;
-const mode = gameModeSelect.value;
-currentTarget = mode === 'desc' ? totalCells : 1;
-targetDisplay.textContent = currentTarget;
-timerDisplay.textContent = '0.0 с';
-errorsDisplay.textContent = '0';
-const style = visualStyleSelect.value;
-centerDot.classList.toggle('visible', style === 'dot');
-numbers = Array.from({ length: totalCells }, (_, i) => i + 1);
-shuffleArray(numbers);
-renderBoard();
-}
+
 function renderBoard() {
-boardEl.innerHTML = '';
-boardEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
-boardEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
-const style = visualStyleSelect.value;
-const mode = gameModeSelect.value;
-const fontSize = size <= 4 ? '1.8rem' : size === 5 ? '1.5rem' : size === 6 ? '1.25rem' : '1.05rem';
-numbers.forEach((num) => {
-const cell = document.createElement('div');
-cell.className = 'cell';
-cell.textContent = num;
-cell.style.fontSize = fontSize;
-if (style === 'colored') {
-const randomColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
-cell.style.backgroundColor = randomColor;
-cell.style.color = '#1f2937';
+  boardEl.innerHTML = '';
+  boardEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
+  boardEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
+
+  const style = visualStyleSelect.value;
+  const mode = gameModeSelect.value;
+  const fontSize = size <= 4 ? '1.8rem' : size === 5 ? '1.5rem' : size === 6 ? '1.25rem' : '1.05rem';
+
+  numbers.forEach((num) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = num;
+    cell.style.fontSize = fontSize;
+
+    if (style === 'colored') {
+      const randomColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+      cell.style.backgroundColor = randomColor;
+      cell.style.color = '#1f2937';
+    }
+
+    if (mode === 'asc' && num < currentTarget) {
+      cell.classList.add('completed');
+    } else if (mode === 'desc' && num > currentTarget) {
+      cell.classList.add('completed');
+    }
+
+    cell.addEventListener('click', () => handleCellClick(num, cell));
+    boardEl.appendChild(cell);
+  });
 }
-if (mode === 'asc' && num < currentTarget) {
-cell.classList.add('completed');
-} else if (mode === 'desc' && num > currentTarget) {
-cell.classList.add('completed');
-}
-cell.addEventListener('click', () => handleCellClick(num, cell));
-boardEl.appendChild(cell);
-});
-}
+
 function handleCellClick(num, cellEl) {
-if (isAttemptUsed) return;
-if (!isRunning) {
-startTimer();
+  if (isAttemptUsed || !isRunning) return;
+
+  const mode = gameModeSelect.value;
+
+  if (num === currentTarget) {
+    haptic('success');
+    cellEl.classList.add('correct-flash');
+    setTimeout(() => cellEl.classList.remove('correct-flash'), 200);
+
+    const isFinished = (mode === 'desc' && currentTarget === 1) || (mode !== 'desc' && currentTarget === totalCells);
+
+    if (isFinished) {
+      finishGame();
+      return;
+    }
+
+    currentTarget = mode === 'desc' ? currentTarget - 1 : currentTarget + 1;
+    targetDisplay.textContent = currentTarget;
+
+    if (mode === 'shuffle') {
+      shuffleArray(numbers);
+      renderBoard();
+    } else {
+      cellEl.classList.add('completed');
+    }
+  } else {
+    haptic('error');
+    errors++;
+    errorsDisplay.textContent = errors;
+    cellEl.classList.add('wrong-flash');
+    setTimeout(() => cellEl.classList.remove('wrong-flash'), 250);
+  }
 }
-const mode = gameModeSelect.value;
-if (num === currentTarget) {
-haptic('success');
-cellEl.classList.add('correct-flash');
-setTimeout(() => cellEl.classList.remove('correct-flash'), 200);
-const isFinished = (mode === 'desc' && currentTarget === 1) || (mode !== 'desc' && currentTarget === totalCells);
-if (isFinished) {
-finishGame();
-return;
-}
-currentTarget = mode === 'desc' ? currentTarget - 1 : currentTarget + 1;
-targetDisplay.textContent = currentTarget;
-if (mode === 'shuffle') {
-shuffleArray(numbers);
-renderBoard();
-} else {
-cellEl.classList.add('completed');
-}
-} else {
-haptic('error');
-errors++;
-errorsDisplay.textContent = errors;
-cellEl.classList.add('wrong-flash');
-setTimeout(() => cellEl.classList.remove('wrong-flash'), 250);
-}
-}
+
 function finishGame() {
-stopTimer();
-isAttemptUsed = true;
-haptic('win');
-const finalSeconds = (performance.now() - startTime) / 1000;
-const formattedTime = finalSeconds.toFixed(1);
-finalTimeEl.textContent = formattedTime + ' с';
-finalErrorsEl.textContent = errors;
-lastResultData = {
-size: size + 'x' + size,
-mode: gameModeSelect.value,
-time: formattedTime,
-errors: errors,
-isSent: false
-};
-localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
-startBtn.textContent = 'Попытка завершена';
-resultModal.classList.add('active');
+  stopTimer();
+  isAttemptUsed = true;
+  haptic('win');
+
+  const finalSeconds = (performance.now() - startTime) / 1000;
+  const formattedTime = finalSeconds.toFixed(1);
+
+  finalAgeEl.textContent = userAge;
+  finalTimeEl.textContent = formattedTime + ' с';
+  finalErrorsEl.textContent = errors;
+
+  lastResultData = {
+    age: userAge,
+    size: size + 'x' + size,
+    mode: gameModeSelect.value,
+    time: formattedTime,
+    errors: errors,
+    isSent: false
+  };
+
+  localStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(lastResultData));
+  resultModal.classList.add('active');
 }
+
+// Очистка ввода от нецифровых символов на лету
+ageInput.addEventListener('input', () => {
+  ageInput.value = ageInput.value.replace(/\D/g, '');
+  ageError.style.display = 'none';
+});
+
+startBtn.addEventListener('click', validateAndStart);
 sendToBotBtn.addEventListener('click', sendResultToTelegram);
-startBtn.addEventListener('click', initGame);
-gridSizeSelect.addEventListener('change', initGame);
-gameModeSelect.addEventListener('change', initGame);
-visualStyleSelect.addEventListener('change', initGame);
-if (!checkSavedAttempt()) {
-initGame();
-}
+
+checkSavedAttempt();
 
   </script>
 
